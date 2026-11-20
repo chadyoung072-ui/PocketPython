@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
 
-permissions:
+permissions:gradle wrapper --gradle-version 8.9
   contents: read
 
 jobs:
