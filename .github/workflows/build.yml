@@ -24,9 +24,10 @@ jobs:
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
+        uses: gradle wrappergradle/actions/setup-gradle@v4
+      with:
+gradle wrapper --gradle-version 8.9
+         
 
       - name: Create Android project
         shell: bash
