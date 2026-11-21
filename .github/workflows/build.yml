@@ -25,97 +25,91 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-  
-     - name: Create Android project
-        shell: bash
-        run: |
+    
+name:CreateAndroidproject
+    shell: bash
+    run: |
           mkdir -p app/src/main/java/com/example/pocketpython
           mkdir -p app/src/main/python
 
-       
 cat>app/build.gradle<<'EOF' 
-           
 plugins {
     id 'com.android.application'
     id 'com.chaquo.python'
 }
 
 android {
-    namespace 'com.example.pocketpython'
-    compileSdk 35
+namespace 'com.example.pocketpython'
+compileSdk 35
 
-    defaultConfig {
-        applicationId 'com.example.pocketpython'
-        minSdk 24
-        targetSdk 35
-        versionCode 1
-        versionName '1.0'
+defaultConfig {
+applicationId 'com.example.pocketpython'
+minSdk 24
+targetSdk 35
+versionCode 1
+versionName '1.0'
 
-        ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a'
-        }
+ndk {
+abiFilters 'arm64-v8a', 'armeabi-v7a'}
 
-        python {
-            version '3.11'
-        }
-    }
+python {version '3.11'}
+}
 }
 
- xmlns:android="http://schemas.android.com/apk/res/android">
-              <application
-                  android:label="Pocket Python"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:allowBackup="true">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
+xmlns:android="http://schemas.android.com/apk/res/android">
+<application
+android:label="Pocket Python"
+android:theme="@android:style/Theme.Material.Light.NoActionBar"
+android:allowBackup="true">
+<activity
+android:name=".MainActivity"
+android:exported="true">
+<intent-filter>
+<action android:name="android.intent.action.MAIN"/>
+<category android:name="android.intent.category.LAUNCHER"/>
+</intent-filter>
+</activity>
+</application>
+</manifest>
+EOF
 
-          cat > app/src/main/python/runner.py <<'EOF'
-          import contextlib
-          import io
-          import traceback
+cat > app/src/main/python/runner.py <<'EOF'
+import contextlib
+import io
+import traceback
 
-          def run_code(source):
-              output = io.StringIO()
-              scope = {"__name__":
+def run_code(source):
+output = io.StringIO()
+scope = {"__name__":
 "__main__"}
-              try:
-                  with contextlib.redirect_stdout(output),
+try:
+with contextlib.redirect_stdout(output),
 import contextlib
 import io
 import traceback
 
 
 def run_code(source):
-    output = io.StringIO()
-    scope = {"__name__": "__main__"}
+output = io.StringIO()
+scope = {"__name__": "__main__"}
 
-    try:
-        with contextlib.redirect_stdout(output),\ contextlib.redirect_stderr(output):
-                      exec(compile(source, "<pocket-python>", "exec"), scope, scope)
-              except BaseException:
-                  traceback.print_exc(file=output)
-              result = output.getvalue()
-              return result if result else "(Program finished with no output.)"
-          EOF
+try:with contextlib.redirect_stdout(output),\ contextlib.redirect_stderr(output):
+exec(compile(source, "<pocket-python>", "exec"), scope, scope)
+except BaseException:
+traceback.print_exc(file=output)
+result = output.getvalue()
+return result if result else "(Program finished with no output.)"
+EOF
 
-          cat > app/src/main/java/com/example/pocketpython/MainActivity.java <<'EOF'
-          package com.example.pocketpython;
+cat > app/src/main/java/com/example/pocketpython/MainActivity.java <<'EOF'
+package com.example.pocketpython;
 
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.graphics.Typeface;
-          import android.view.ViewGroup;
-          import android.view.Gravity;
-          import android.widget.*;
+import android.app.Activity;
+import android.os.Bundle;
+import android.graphics.Typeface;
+import android.view.ViewGroup;
+import android.view.Gravity;
+        import android.widget.*;
           import android.content.Intent;
           import android.net.Uri;
           import com.chaquo.python.Python;
