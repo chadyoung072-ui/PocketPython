@@ -1,11 +1,11 @@
 name: Build Pocket Python APK
- 
+
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
-    
 permissions:
   contents: read
 
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get source code
+      - name: Check out source
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -23,184 +23,180 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-    
--name: Create Android project 
-             shell: bash
-          run: |        
-       |
+      - name: Create Android project
+        shell: bash
+        run: |
+          set -e
+
           mkdir -p app/src/main/java/com/example/pocketpython
           mkdir -p app/src/main/python
+          mkdir -p app/src/main/res/values
 
-cat>app/build.gradle<<'EOF' 
-plugins {
-    id 'com.android.application'
-    id 'com.chaquo.python'
-}
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = 'PocketPython'
+          include ':app'
+          EOF
 
-android {
-namespace 'com.example.pocketpython'
-compileSdk 35
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+              id 'com.chaquo.python' version '16.1.0' apply false
+          }
+          EOF
 
-defaultConfig {
-applicationId 'com.example.pocketpython'
-minSdk 24
-targetSdk 35
-versionCode 1
-versionName '1.0'
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+              id 'com.chaquo.python'
+          }
 
-ndk {
-abiFilters 'arm64-v8a', 'armeabi-v7a'}
+          android {
+              namespace 'com.example.pocketpython'
+              compileSdk 35
 
-python {version '3.11'}
-}
-}
+              defaultConfig {
+                  applicationId 'com.example.pocketpython'
+                  minSdk 24
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0'
 
-xmlns:android="http://schemas.android.com/apk/res/android">
-<application
-android:label="Pocket Python"
-android:theme="@android:style/Theme.Material.Light.NoActionBar"
-android:allowBackup="true">
-<activity
-android:name=".MainActivity"
-android:exported="true">
-<intent-filter>
-<action android:name="android.intent.action.MAIN"/>
-<category android:name="android.intent.category.LAUNCHER"/>
-</intent-filter>
-</activity>
-</application>
-</manifest>
-EOF
+                  ndk {
+                      abiFilters 'arm64-v8a', 'armeabi-v7a'
+                  }
 
-cat > app/src/main/python/runner.py <<'EOF'
-import contextlib
-import io
-import traceback
+                  python {
+                      version '3.11'
+                  }
+              }
+          }
+          EOF
 
-def run_code(source):
-output = io.StringIO()
-scope = {"__name__":
-"__main__"}
-try:
-with contextlib.redirect_stdout(output),
-import contextlib
-import io
-import traceback
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:label="Pocket Python"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
+                  android:allowBackup="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
 
+          cat > app/src/main/python/runner.py <<'EOF'
+          import contextlib
+          import io
+          import traceback
 
-def run_code(source):
-output = io.StringIO()
-scope = {"__name__": "__main__"}
+          def run_code(source):
+              output = io.StringIO()
+              scope = {"__name__": "__main__"}
+              try:
+                  with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+                      exec(compile(source, "<pocket-python>", "exec"), scope, scope)
+              except BaseException:
+                  traceback.print_exc(file=output)
+              result = output.getvalue()
+              return result if result else "(Program finished with no output.)"
+          EOF
 
-try:with contextlib.redirect_stdout(output),\ contextlib.redirect_stderr(output):
-exec(compile(source, "<pocket-python>", "exec"), scope, scope)
-except BaseException:
-traceback.print_exc(file=output)
-result = output.getvalue()
-return result if result else "(Program finished with no output.)"
-EOF
+          cat > app/src/main/java/com/example/pocketpython/MainActivity.java <<'EOF'
+          package com.example.pocketpython;
 
-cat > app/src/main/java/com/example/pocketpython/MainActivity.java <<'EOF'
-package com.example.pocketpython;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.graphics.Typeface;
-import android.view.ViewGroup;
-import android.view.Gravity;
-        import android.widget.*;
-          import android.content.Intent;
-          import android.net.Uri;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.graphics.Typeface;
+          import android.view.Gravity;
+          import android.widget.Button;
+          import android.widget.EditText;
+          import android.widget.LinearLayout;
+          import android.widget.ScrollView;
+          import android.widget.TextView;
           import com.chaquo.python.Python;
           import com.chaquo.python.android.AndroidPlatform;
-          import java.io.*;
 
           public class MainActivity extends Activity {
-              EditText editor;
-              TextView output;
-              static final int OPEN_FILE = 1, SAVE_FILE = 2;
+              private EditText editor;
+              private TextView output;
 
               @Override
-              public void onCreate(Bundle b) {
-                  super.onCreate(b);
-                  if (!Python.isStarted()) Python.start(new AndroidPlatform(this));
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  if (!Python.isStarted()) {
+                      Python.start(new AndroidPlatform(this));
+                  }
                   buildScreen();
               }
 
-              LinearLayout.LayoutParams lp(int w, int h) {
-                  return new LinearLayout.LayoutParams(w, h);
+              private LinearLayout.LayoutParams proportionalParams(float weight) {
+                  return new LinearLayout.LayoutParams(0, -1, weight);
               }
 
-              Button button(String label, Runnable action) {
-                  Button b = new Button(this);
-                  b.setText(label);
-                  b.setTextSize(12);
-                  b.setOnClickListener(v -> action.run());
-                  return b;
+              private Button button(String label, Runnable action) {
+                  Button button = new Button(this);
+                  button.setText(label);
+                  button.setOnClickListener(view -> action.run());
+                  return button;
               }
 
-              void buildScreen() {
+              private void buildScreen() {
                   LinearLayout root = new LinearLayout(this);
                   root.setOrientation(LinearLayout.VERTICAL);
-                  root.setPadding(12, 8, 12, 8);
-                  root.setBackgroundColor(0xFFF5F6F8);
+                  root.setPadding(24, 24, 24, 24);
 
                   TextView title = new TextView(this);
                   title.setText("Pocket Python");
-                  title.setTextSize(25);
+                  title.setTextSize(24);
                   title.setTypeface(null, Typeface.BOLD);
-                  root.addView(title, lp(-1, 52));
-
-                  LinearLayout buttons = new LinearLayout(this);
-                  buttons.addView(button("Run", this::runPython),
-                      new LinearLayout.LayoutParams(0, -2, 1));
-                  buttons.addView(button("Open .py",
-                      () -> chooseFile(OPEN_FILE)),
-                      new LinearLayout.LayoutParams(0, -2, 1));
-                  buttons.addView(button("Save .py",
-                      () -> chooseFile(SAVE_FILE)),
-                      new LinearLayout.LayoutParams(0, -2, 1));
-                  root.addView(buttons);
-
-                  TextView label = new TextView(this);
-                  label.setText("Python code");
-                  label.setTextSize(16);
-                  root.addView(label, lp(-1, 32));
+                  root.addView(title);
 
                   editor = new EditText(this);
-                  editor.setGravity(Gravity.TOP | Gravity.START);
                   editor.setTypeface(Typeface.MONOSPACE);
-                  editor.setTextSize(14);
-                  editor.setMinLines(8);
-                  editor.setHorizontallyScrolling(true);
-                  editor.setText(
-                      "print('Hello from Pocket Python!')\n" +
-                      "for i in range(3):\n" +
-                      "    print('Count:', i + 1)\\n");
-                  root.addView(editor,
-                      new LinearLayout.LayoutParams(-1, 0, 1.2f));
+                  editor.setGravity(Gravity.TOP | Gravity.START);
+                  editor.setText("print('Hello from Pocket Python!')\nfor i in range(3):\n    print('Count:', i + 1)");
+                  editor.setLayoutParams(proportionalParams(2));
+                  root.addView(editor);
 
-                  TextView outLabel = new TextView(this);
-                  outLabel.setText("Output");
-                  outLabel.setTextSize(16);
-                  root.addView(outLabel, lp(-1, 32));
+                  output = new TextView(this);
+                  output.setTypeface(Typeface.MONOSPACE);
+                  output.setTextColor(0xFFFFFFFF);
+                  output.setBackgroundColor(0xFF111827);
+                  output.setPadding(16, 16, 16, 16);
 
                   ScrollView scroll = new ScrollView(this);
-                  scroll.setBackgroundColor(0xFF111827);
-                  output = new TextView(this);
-                  output.setTextColor(0xFFFFFFFF);
-                  output.setTextSize(13);
-                  output.setTypeface(Typeface.MONOSPACE);
-                  output.setPadding(10, 10, 10, 10);
+                  scroll.setLayoutParams(proportionalParams(1));
                   scroll.addView(output);
-                  root.addView(scroll,
-                      new LinearLayout.LayoutParams(-1, 0, 1));
+                  root.addView(scroll);
+
+                  Button run = button("Run", this::runPython);
+                  root.addView(run);
+
                   setContentView(root);
               }
 
-              void runPython() {
+              private void runPython() {
                   output.setText("Running...");
                   String code = editor.getText().toString();
                   new Thread(() -> {
@@ -208,64 +204,18 @@ import android.view.Gravity;
                       try {
                           result = Python.getInstance()
                               .getModule("runner")
-                              .callAttr("run_code", code).toString();
-                      } catch (Exception e) {
-                          result = "Error: " + e;
+                              .callAttr("run_code", code)
+                              .toString();
+                      } catch (Exception error) {
+                          result = "Error: " + error;
                       }
                       final String text = result;
                       runOnUiThread(() -> output.setText(text));
                   }).start();
               }
-
-              void chooseFile(int action) {
-                  Intent i;
-                  if (action == OPEN_FILE) {
-                      i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                      i.setType("*/*");
-                      i.addCategory(Intent.CATEGORY_OPENABLE);
-                  } else {
-                      i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                      i.setType("text/x-python");
-                      i.addCategory(Intent.CATEGORY_OPENABLE);
-                      i.putExtra(Intent.EXTRA_TITLE, "script.py");
-                  }
-                  startActivityForResult(i, action);
-              }
-
-              @Override
-              protected void onActivityResult(int request, int result, Intent data) {
-                  super.onActivityResult(request, result, data);
-                  if (result != RESULT_OK || data == null) return;
-                  Uri uri = data.getData();
-                  if (uri == null) return;
-                  try {
-                      if (request == OPEN_FILE) {
-                          try (InputStream in = getContentResolver()
-                                  .openInputStream(uri)) {
-                              ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                              byte[] buf = new byte[4096];
-                              int n;
-                              while ((n = in.read(buf)) != -1)
-                                  bytes.write(buf, 0, n);
-                              editor.setText(bytes.toString("UTF-8"));
-                          }
-                      } else if (request == SAVE_FILE) {
-                          try (OutputStream out = getContentResolver()
-                                  .openOutputStream(uri)) {
-                              out.write(editor.getText().toString()
-                                  .getBytes("UTF-8"));
-                          }
-                      }
-                  } catch (Exception e) {
-                      Toast.makeText(this, "File error: " + e.getMessage(),
-                          Toast.LENGTH_LONG).show();
-                  }
-              }
           }
           EOF
-echo "===== CHECKING GENERATED APP CONFIG ====="
-cat app/build.gradle
-echo "===== END APP CONFIG ====="
+
           gradle wrapper --gradle-version 8.9
 
       - name: Build debug APK
@@ -273,7 +223,7 @@ echo "===== END APP CONFIG ====="
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
 
-      - name: Save APK for download
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: PocketPython-APK
