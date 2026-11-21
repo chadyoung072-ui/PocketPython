@@ -35,7 +35,7 @@ jobs:
           mkdir -p app/src/main/java/com/example/pocketpython
           mkdir -p app/src/main/python
 
-          cat > settings.gradle <<'EOF'
+       cat > app/build.gradle<<'EOF'
           pluginManagement {
               repositories {
                   google()
@@ -54,7 +54,7 @@ jobs:
           include(":app")
           EOF
 
-          cat > build.gradle <<'EOF'
+       cat > app/build.gradle<<'EOF'
           plugins {
               id 'com.android.application' version '8.7.3' apply false
               id 'com.chaquo.python' version '16.1.0' apply false
