@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
 
+    
 permissions:
   contents: read
 
@@ -13,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:YAML syntax 
+    steps:
       - name: Get source code
         uses: actions/checkout@v4
 
@@ -24,12 +25,9 @@ jobs:
           java-version: '17'
 
       - name: Set up Gradle
-        uses: 
-      with:
-
-         
-
-      - name: Create Android project
+        uses: gradle/actions/setup-gradle@v4
+  
+     - name: Create Android project
         shell: bash
         run: |
           mkdir -p app/src/main/java/com/example/pocketpython
