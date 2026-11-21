@@ -26,7 +26,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
     
-name:CreateAndroidproject
+- name: Create Android project
+        
     shell: bash
     run: |
           mkdir -p app/src/main/java/com/example/pocketpython
