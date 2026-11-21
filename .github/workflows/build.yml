@@ -74,9 +74,8 @@ jobs:
               compileSdk 35
 
               defaultConfig {
-                  ndk {
-    abiFilters "arm64-v8a", "armeabi-v7a"
-}
+        applicationId 'com.example.pocketpython'
+    
                   minSdk 24
                   targetSdk 35
                   versionCode 1
@@ -210,8 +209,8 @@ def run_code(source):
                   editor.setMinLines(8);
                   editor.setHorizontallyScrolling(true);
                   editor.setText(
-                      "print('Hello from Pocket Python!')\\n" +
-                      "for i in range(3):\\n" +
+                      "print('Hello from Pocket Python!')\n" +
+                      "for i in range(3):\n" +
                       "    print('Count:', i + 1)\\n");
                   root.addView(editor,
                       new LinearLayout.LayoutParams(-1, 0, 1.2f));
