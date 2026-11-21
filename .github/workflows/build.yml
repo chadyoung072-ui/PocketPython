@@ -65,9 +65,7 @@ chaquopy {
 }
 EOF
 
-echo "===== VERIFYING CONFIGURATION ====="
-cat app/build.gradle
-echo "===== END CONFIGURATION ====="
+
 cat > app/build.gradle <<'EOF'
 plugins {
     id 'com.android.application'
