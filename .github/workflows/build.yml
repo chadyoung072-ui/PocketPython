@@ -304,7 +304,9 @@ def run_code(source):
               }
           }
           EOF
-
+echo "===== CHECKING GENERATED APP CONFIG ====="
+cat app/build.gradle
+echo "===== END APP CONFIG ====="
           gradle wrapper --gradle-version 8.9
 
       - name: Build debug APK
