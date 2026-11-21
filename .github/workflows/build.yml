@@ -36,7 +36,7 @@ jobs:
           mkdir -p app/src/main/python
 
        
-cat > app/build.gradle <<'EOF' 
+cat>app/build.gradle<<'EOF' 
            
 plugins {
     id 'com.android.application'
