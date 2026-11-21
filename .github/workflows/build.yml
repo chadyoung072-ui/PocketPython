@@ -114,9 +114,21 @@ jobs:
 
           def run_code(source):
               output = io.StringIO()
-              scope = {"__name__": "__main__"}
+              scope = {"__name__":
+"__main__"}
               try:
-                  with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+                  with contextlib.redirect_stdout(output),
+import contextlib
+import io
+import traceback
+
+
+def run_code(source):
+    output = io.StringIO()
+    scope = {"__name__": "__main__"}
+
+    try:
+        with contextlib.redirect_stdout(output),\ contextlib.redirect_stderr(output):
                       exec(compile(source, "<pocket-python>", "exec"), scope, scope)
               except BaseException:
                   traceback.print_exc(file=output)
